@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Loader2 } from 'lucide-react';
-import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd'; // <-- 'type' eklendi
+import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import TaskCard, { type TaskType } from './TaskCard';
+import TaskDetailsPanel from './TaskDetailsPanel'; // YENİ EKLENDİ
 
 const columns = [
   { title: 'To Do', status: 'To Do', dotColor: 'bg-gray-400' },
@@ -18,6 +19,10 @@ interface KanbanBoardProps {
 export default function KanbanBoard({ refreshTrigger }: KanbanBoardProps) {
   const [tasks, setTasks] = useState<TaskType[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // YENİ: Hangi görevin seçildiğini ve panelin açık olup olmadığını tutan state'ler
+  const [selectedTask, setSelectedTask] = useState<TaskType | null>(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   useEffect(() => {
     fetchTasks();
@@ -60,36 +65,35 @@ export default function KanbanBoard({ refreshTrigger }: KanbanBoardProps) {
     }
   };
 
-  // Sürükleme işlemi bittiğinde tetiklenen fonksiyon
   const onDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId } = result;
 
-    // Eğer kart boşluğa veya aynı yere bırakıldıysa hiçbir şey yapma
     if (!destination) return;
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
-    // 1. Frontend (State) Güncellemesi - Anında tepki için (Optimistic UI)
     const draggedTaskId = parseInt(draggableId);
     const newStatus = destination.droppableId;
     
-    // Geçici olarak React state'ini güncelliyoruz (Kart anında yeni yerine geçer)
     setTasks(prevTasks => 
       prevTasks.map(task => 
         task.id === draggedTaskId ? { ...task, status: newStatus } : task
       )
     );
 
-    // 2. Backend Güncellemesi - Arka planda sessizce Go API'sine bildir
     try {
       await axios.put(`http://localhost:8080/api/tasks/${draggedTaskId}`, {
         status: newStatus
       });
-      // Go'daki UpdateTask fonksiyonumuz, sadece gönderdiğimiz alanları (status) günceller, diğerlerini bozmaz.
     } catch (error) {
       console.error("Görev durumu güncellenirken hata:", error);
-      // Eğer backend hata verirse, eski verileri geri getirmek için listeyi tekrar çekiyoruz
       fetchTasks();
     }
+  };
+
+  // YENİ: Göreve tıklandığında paneli açan fonksiyon
+  const handleTaskClick = (task: TaskType) => {
+    setSelectedTask(task);
+    setIsPanelOpen(true);
   };
 
   if (loading) {
@@ -102,61 +106,67 @@ export default function KanbanBoard({ refreshTrigger }: KanbanBoardProps) {
   }
 
   return (
-    // Tüm Board'u DragDropContext ile sarmalıyoruz
-    <DragDropContext onDragEnd={onDragEnd}>
-      <div className="flex h-full gap-6 overflow-x-auto pb-4">
-        {columns.map((column) => {
-          const columnTasks = tasks.filter(task => task.status === column.status);
+    <>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div className="flex h-full gap-6 overflow-x-auto pb-4">
+          {columns.map((column) => {
+            const columnTasks = tasks.filter(task => task.status === column.status);
 
-          return (
-            <div key={column.title} className="flex-shrink-0 w-[320px] flex flex-col">
-              {/* Kolon Başlığı (Sabit) */}
-              <div className="flex items-center justify-between mb-4 px-1">
-                <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${column.dotColor}`}></span>
-                  <h2 className="text-white font-semibold text-sm">{column.title}</h2>
-                  <span className="text-text-muted text-xs bg-[#27272A] px-2 py-0.5 rounded-full">
-                    {columnTasks.length}
-                  </span>
-                </div>
-                <button className="text-text-muted hover:text-white transition-colors">
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Sürükleme Alanı (Droppable) */}
-              <Droppable droppableId={column.status}>
-                {(provided, snapshot) => (
-                  <div 
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className={`flex flex-col gap-3 flex-1 overflow-y-auto pr-1 custom-scrollbar transition-colors rounded-xl ${
-                      snapshot.isDraggingOver ? 'bg-[#27272A]/30' : ''
-                    }`}
-                  >
-                    {columnTasks.map((task, index) => (
-                      // Sürüklenebilir Kart (Draggable)
-                      <Draggable key={task.id} draggableId={task.id.toString()} index={index}>
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className={`${snapshot.isDragging ? 'opacity-80 scale-105' : 'opacity-100'} transition-transform duration-200`}
-                          >
-                            <TaskCard task={task} />
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
+            return (
+              <div key={column.title} className="flex-shrink-0 w-[320px] flex flex-col">
+                <div className="flex items-center justify-between mb-4 px-1">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${column.dotColor}`}></span>
+                    <h2 className="text-white font-semibold text-sm">{column.title}</h2>
+                    <span className="text-text-muted text-xs bg-[#27272A] px-2 py-0.5 rounded-full">
+                      {columnTasks.length}
+                    </span>
                   </div>
-                )}
-              </Droppable>
-            </div>
-          );
-        })}
-      </div>
-    </DragDropContext>
+                  <button className="text-text-muted hover:text-white transition-colors">
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <Droppable droppableId={column.status}>
+                  {(provided, snapshot) => (
+                    <div 
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={`flex flex-col gap-3 flex-1 overflow-y-auto pr-1 custom-scrollbar transition-colors rounded-xl ${
+                        snapshot.isDraggingOver ? 'bg-[#27272A]/30' : ''
+                      }`}
+                    >
+                      {columnTasks.map((task, index) => (
+                        <Draggable key={task.id} draggableId={task.id.toString()} index={index}>
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              className={`${snapshot.isDragging ? 'opacity-80 scale-105' : 'opacity-100'} transition-transform duration-200`}
+                            >
+                              {/* YENİ: onClick fonksiyonunu karta iletiyoruz */}
+                              <TaskCard task={task} onClick={() => handleTaskClick(task)} />
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </div>
+            );
+          })}
+        </div>
+      </DragDropContext>
+
+      {/* YENİ: Görev Detay Paneli */}
+      <TaskDetailsPanel 
+        task={selectedTask}
+        isOpen={isPanelOpen}
+        onClose={() => setIsPanelOpen(false)}
+      />
+    </>
   );
 }
