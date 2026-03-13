@@ -1,4 +1,4 @@
-import { Search, Sun, Moon, Bell, LayoutGrid, List, Filter, ArrowUpDown, Plus } from 'lucide-react';
+import { Search, Sun, Moon, Bell, LayoutGrid, List, Filter, ArrowUpDown, Plus, LogOut } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
@@ -11,17 +11,15 @@ interface HeaderProps {
   setSortByPriority: (val: boolean) => void;
   isDarkMode: boolean;
   setIsDarkMode: (val: boolean) => void;
+  onLogout: () => void; // YENİ: TypeScript'e bu fonksiyonu tanıttık
 }
 
 export default function Header({ 
-  onOpenCreateModal, searchQuery, setSearchQuery, filterHighPriority, setFilterHighPriority, sortByPriority, setSortByPriority, isDarkMode, setIsDarkMode
+  onOpenCreateModal, searchQuery, setSearchQuery, filterHighPriority, setFilterHighPriority, sortByPriority, setSortByPriority, isDarkMode, setIsDarkMode, onLogout
 }: HeaderProps) {
   
-  // Bulunduğumuz sayfayı ve yönlendirme fonksiyonunu alıyoruz
   const location = useLocation();
   const navigate = useNavigate();
-  
-  // Ana sayfada (Board) mıyız kontrolü
   const isBoardPage = location.pathname === '/';
 
   return (
@@ -48,7 +46,6 @@ export default function Header({
           </button>
           <div className="w-px h-6 bg-border-main mx-2"></div>
           
-          {/* Avatar'a tıklanınca Profile sayfasına git */}
           <div onClick={() => navigate('/profile')} className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
             <div className="text-right hidden md:block">
               <p className="text-sm font-medium text-text-main">İbrahim</p>
@@ -56,6 +53,15 @@ export default function Header({
             </div>
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-semibold text-sm">IB</div>
           </div>
+
+          {/* YENİ: Çıkış Yap Butonu */}
+          <button 
+            onClick={onLogout} 
+            className="flex items-center justify-center p-2 text-red-500/70 hover:text-red-500 hover:bg-red-500/10 rounded-md transition-all ml-1"
+            title="Log Out"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
@@ -69,7 +75,6 @@ export default function Header({
           )}
         </div>
 
-        {/* Sadece Board sayfasındaysak Filtre/Sort ve Create Task butonlarını göster */}
         {isBoardPage && (
           <div className="flex items-center gap-3">
             <div className="flex items-center bg-surface rounded-md p-1 border border-border-main">
