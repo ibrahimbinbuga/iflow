@@ -12,6 +12,7 @@ func SetupRoutes(r *gin.Engine) {
 		// Task Rotaları
 		api.POST("/tasks", handlers.CreateTask)
 		api.GET("/tasks", handlers.GetTasks)
+		api.PUT("/tasks/:id", handlers.UpdateTask)
 
 		// User Rotaları
 		api.POST("/users", handlers.CreateUser)
