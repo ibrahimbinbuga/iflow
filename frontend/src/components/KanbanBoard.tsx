@@ -14,10 +14,25 @@ const columns = [
 
 interface KanbanBoardProps {
   refreshTrigger: number;
-  searchQuery: string; // YENİ: Arama prop'u eklendi
+  searchQuery: string;
+  filterHighPriority: boolean;
+  sortByPriority: boolean;
 }
 
-export default function KanbanBoard({ refreshTrigger, searchQuery }: KanbanBoardProps) {
+// Önceliklerin matematiksel ağırlığı (Sıralama yaparken kullanacağız)
+const priorityWeight: Record<string, number> = {
+  'Urgent': 4,
+  'High': 3,
+  'Medium': 2,
+  'Low': 1
+};
+
+export default function KanbanBoard({ 
+  refreshTrigger, 
+  searchQuery, 
+  filterHighPriority, 
+  sortByPriority 
+}: KanbanBoardProps) {
   const [tasks, setTasks] = useState<TaskType[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -104,23 +119,33 @@ export default function KanbanBoard({ refreshTrigger, searchQuery }: KanbanBoard
     );
   }
 
-  // YENİ: Görevleri arama metnine göre filtrele (Başlık, Açıklama veya Etiketlerde arar)
-  const filteredTasks = tasks.filter(task => {
+  // 1. ADIM: Arama ve Filtreleme İşlemi
+  let processedTasks = tasks.filter(task => {
     const query = searchQuery.toLowerCase();
-    return (
+    const matchesSearch = 
       task.title.toLowerCase().includes(query) ||
       task.description.toLowerCase().includes(query) ||
-      task.tags.some(tag => tag.toLowerCase().includes(query))
-    );
+      task.tags.some(tag => tag.toLowerCase().includes(query));
+    
+    // Eğer "High Priority" butonu açıksa sadece Urgent ve High olanları geçir
+    const matchesFilter = filterHighPriority 
+      ? (task.priority === 'Urgent' || task.priority === 'High') 
+      : true;
+
+    return matchesSearch && matchesFilter;
   });
+
+  // 2. ADIM: Sıralama İşlemi
+  if (sortByPriority) {
+    processedTasks.sort((a, b) => priorityWeight[b.priority] - priorityWeight[a.priority]);
+  }
 
   return (
     <>
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex h-full gap-6 overflow-x-auto pb-4">
           {columns.map((column) => {
-            // task.filter yerine artık filteredTasks.filter kullanıyoruz
-            const columnTasks = filteredTasks.filter(task => task.status === column.status);
+            const columnTasks = processedTasks.filter(task => task.status === column.status);
 
             return (
               <div key={column.title} className="flex-shrink-0 w-[320px] flex flex-col">

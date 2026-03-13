@@ -4,15 +4,26 @@ interface HeaderProps {
   onOpenCreateModal: () => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  filterHighPriority: boolean;
+  setFilterHighPriority: (val: boolean) => void;
+  sortByPriority: boolean;
+  setSortByPriority: (val: boolean) => void;
 }
 
-export default function Header({ onOpenCreateModal, searchQuery, setSearchQuery }: HeaderProps) {
+export default function Header({ 
+  onOpenCreateModal, 
+  searchQuery, 
+  setSearchQuery,
+  filterHighPriority,
+  setFilterHighPriority,
+  sortByPriority,
+  setSortByPriority
+}: HeaderProps) {
   return (
     <header className="flex flex-col bg-background shrink-0">
       <div className="h-16 flex items-center justify-between px-6 border-b border-[#27272A]">
         <div className="flex-1 max-w-2xl relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
-          {/* YENİ: input alanına value ve onChange bağlandı */}
           <input
             type="text"
             value={searchQuery}
@@ -65,13 +76,30 @@ export default function Header({ onOpenCreateModal, searchQuery, setSearchQuery 
 
           <div className="w-px h-6 bg-[#27272A] mx-1"></div>
 
-          <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-text-muted hover:text-white border border-[#27272A] rounded-md hover:bg-surface transition-colors">
+          {/* YENİ: Dinamik Filter Butonu */}
+          <button 
+            onClick={() => setFilterHighPriority(!filterHighPriority)}
+            className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-md transition-all border ${
+              filterHighPriority 
+                ? 'bg-primary/10 text-primary border-primary/30 shadow-sm' 
+                : 'text-text-muted hover:text-white border-[#27272A] hover:bg-surface'
+            }`}
+          >
             <Filter className="w-4 h-4" />
-            <span>Filter</span>
+            <span>{filterHighPriority ? 'High Priority' : 'Filter'}</span>
           </button>
-          <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-text-muted hover:text-white border border-[#27272A] rounded-md hover:bg-surface transition-colors">
+
+          {/* YENİ: Dinamik Sort Butonu */}
+          <button 
+            onClick={() => setSortByPriority(!sortByPriority)}
+            className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-md transition-all border ${
+              sortByPriority 
+                ? 'bg-primary/10 text-primary border-primary/30 shadow-sm' 
+                : 'text-text-muted hover:text-white border-[#27272A] hover:bg-surface'
+            }`}
+          >
             <ArrowUpDown className="w-4 h-4" />
-            <span>Sort</span>
+            <span>{sortByPriority ? 'Priority Sort' : 'Sort'}</span>
           </button>
 
           <button 
