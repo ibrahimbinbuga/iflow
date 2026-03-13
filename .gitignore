@@ -2,15 +2,16 @@
 # Çevre Değişkenleri & Şifreler (EN ÖNEMLİ KISIM)
 # =========================
 .env
+.env.*
 backend/.env
-*.env
+frontend/.env
+frontend/.env.*
 *.pem
 *.key
 
 # =========================
 # Go (Golang) Derleme Çıktıları
 # =========================
-# Eğer go build komutu çalıştırırsan oluşan binary dosyaları git'e atılmaz
 backend/main
 backend/api
 *.exe
@@ -21,6 +22,18 @@ backend/api
 *.test
 *.out
 vendor/
+
+# =========================
+# Node.js & React Frontend Çıktıları
+# =========================
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.eslintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
 
 # =========================
 # macOS İşletim Sistemi Dosyaları
