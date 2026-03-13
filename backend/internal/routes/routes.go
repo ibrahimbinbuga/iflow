@@ -22,6 +22,7 @@ func SetupRoutes(r *gin.Engine) {
 		// User Rotaları
 		api.POST("/users", handlers.CreateUser)
 		api.GET("/users", handlers.GetUsers)
+		api.PUT("/users/:id", handlers.UpdateUser) // YENİ EKLENEN SATIR
 
 		// Workspace Rotaları
 		api.POST("/workspaces", handlers.CreateWorkspace)
