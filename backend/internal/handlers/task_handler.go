@@ -42,17 +42,18 @@ func GetTasks(c *gin.Context) {
 	c.JSON(http.StatusOK, tasks)
 }
 
-// Gelen JSON isteğini karşılayacak özel yapı
+// Gelen JSON isteğini karşılayacak özel yapı (DTO)
 type UpdateTaskInput struct {
 	ProjectID   uint   `json:"project_id"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Status      string `json:"status"`
 	Priority    string `json:"priority"`
-	AssigneeIDs []uint `json:"assignee_ids"` // Sadece kullanıcı ID'lerini alacağız
+	AssigneeIDs []uint `json:"assignee_ids"` // Kullanıcı ID'leri
+	TagIDs      []uint `json:"tag_ids"`      // Etiket ID'leri
 }
 
-// UpdateTask - Mevcut bir görevi günceller ve kişileri atar
+// UpdateTask - Mevcut bir görevi günceller, kişileri ve etiketleri atar
 func UpdateTask(c *gin.Context) {
 	taskID := c.Param("id") // URL'den gelen ID'yi al (örn: /api/tasks/1)
 	var task models.Task
@@ -70,8 +71,7 @@ func UpdateTask(c *gin.Context) {
 		return
 	}
 
-	// 3. Temel alanları güncelle
-	// GORM Updates metodu, boş olmayan alanları otomatik günceller
+	// 3. Temel alanları güncelle (Boş olmayanları günceller)
 	database.DB.Model(&task).Updates(models.Task{
 		ProjectID:   input.ProjectID,
 		Title:       input.Title,
@@ -80,17 +80,25 @@ func UpdateTask(c *gin.Context) {
 		Priority:    input.Priority,
 	})
 
-	// 4. Many-to-Many İlişkiyi Güncelle (Sihirli Kısım ✨)
-	// Eğer array içinde ID'ler gönderildiyse, bu kullanıcıları bul ve göreve ata
+	// 4. Many-to-Many İlişkiyi Güncelle: Assignees (Kişiler)
 	if len(input.AssigneeIDs) > 0 {
 		var users []models.User
 		database.DB.Find(&users, input.AssigneeIDs)
 
-		// Replace metodu, eski atamaları silip sadece yeni verdiklerimizi ekler (task_assignees tablosunu yönetir)
+		// Replace metodu, eski atamaları silip sadece yeni verdiklerimizi ekler
 		database.DB.Model(&task).Association("Assignees").Replace(&users)
 	}
 
-	// 5. Görevin en güncel halini, ilişkileriyle birlikte geri dön
+	// 5. Many-to-Many İlişkiyi Güncelle: Tags (Etiketler)
+	if len(input.TagIDs) > 0 {
+		var tags []models.Tag
+		database.DB.Find(&tags, input.TagIDs)
+
+		// Etiketleri göreve bağla
+		database.DB.Model(&task).Association("Tags").Replace(&tags)
+	}
+
+	// 6. Görevin en güncel halini, ilişkileriyle birlikte geri dön
 	database.DB.Preload("Assignees").Preload("Tags").First(&task, taskID)
 
 	c.JSON(http.StatusOK, task)

@@ -25,5 +25,13 @@ func SetupRoutes(r *gin.Engine) {
 		// Project Rotaları (YENİ)
 		api.POST("/projects", handlers.CreateProject)
 		api.GET("/projects", handlers.GetProjects)
+
+		// Tag Rotaları (YENİ)
+		api.POST("/tags", handlers.CreateTag)
+		api.GET("/tags", handlers.GetTags)
+
+		// Comment Rotaları (YENİ)
+		api.POST("/comments", handlers.CreateComment)
+		api.GET("/tasks/:taskId/comments", handlers.GetCommentsByTask)
 	}
 }
