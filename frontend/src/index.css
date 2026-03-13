@@ -12,4 +12,7 @@ body {
   background-color: var(--color-background);
   color: var(--color-text-main);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: #3F3F46; border-radius: 4px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 }
