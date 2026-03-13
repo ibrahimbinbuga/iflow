@@ -1,11 +1,9 @@
 package database
 
 import (
-	"fmt"
 	"log"
 	"os"
 
-	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -13,26 +11,20 @@ import (
 var DB *gorm.DB
 
 func ConnectDB() {
-	// .env dosyasını yükle
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("Uyarı: .env dosyası bulunamadı, sistem değişkenleri kullanılacak.")
+	// 1. Önce sistemde (Render.com üzerinde) bir DATABASE_URL var mı diye bak
+	dsn := os.Getenv("DATABASE_URL")
+
+	// 2. Eğer yoksa (yani sen kendi bilgisayarında çalıştırıyorsan), eski lokal adresini kullan
+	if dsn == "" {
+		// DİKKAT: Buradaki şifre ve dbname kısımlarını kendi eski lokal bilgilerine göre düzelt
+		dsn = "host=localhost user=postgres password=postgres dbname=iflow port=5432 sslmode=disable"
 	}
 
-	host := os.Getenv("DB_HOST")
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
-	dbname := os.Getenv("DB_NAME")
-	port := os.Getenv("DB_PORT")
-
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Europe/Istanbul",
-		host, user, password, dbname, port)
-
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	var err error
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatal("Veritabanına bağlanılamadı! \n", err)
+		log.Fatal("Veritabanına bağlanılamadı: ", err)
 	}
 
-	fmt.Println("🚀 Veritabanı bağlantısı başarıyla kuruldu!")
-	DB = db
+	log.Println("🚀 Veritabanı bağlantısı başarıyla kuruldu!")
 }
