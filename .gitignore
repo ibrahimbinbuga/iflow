@@ -1,0 +1,40 @@
+# =========================
+# Çevre Değişkenleri & Şifreler (EN ÖNEMLİ KISIM)
+# =========================
+.env
+backend/.env
+*.env
+*.pem
+*.key
+
+# =========================
+# Go (Golang) Derleme Çıktıları
+# =========================
+# Eğer go build komutu çalıştırırsan oluşan binary dosyaları git'e atılmaz
+backend/main
+backend/api
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+
+# =========================
+# macOS İşletim Sistemi Dosyaları
+# =========================
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# =========================
+# IDE & Editör Klasörleri (VS Code, GoLand vb.)
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

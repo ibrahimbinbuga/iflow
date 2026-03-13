@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: iflow-db
+    restart: always
+    environment:
+      POSTGRES_USER: iflow_user
+      POSTGRES_PASSWORD: iflow_password
+      POSTGRES_DB: iflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - iflow-data:/var/lib/postgresql/data
+
+volumes:
+  iflow-data:
