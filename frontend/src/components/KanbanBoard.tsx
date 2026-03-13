@@ -10,33 +10,35 @@ const columns = [
   { title: 'Done', status: 'Done', dotColor: 'bg-emerald-500' },
 ];
 
-export default function KanbanBoard() {
+// Dışarıdan gelen yenileme sinyali (refreshTrigger) eklendi
+interface KanbanBoardProps {
+  refreshTrigger: number;
+}
+
+export default function KanbanBoard({ refreshTrigger }: KanbanBoardProps) {
   const [tasks, setTasks] = useState<TaskType[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Bileşen ekrana geldiğinde API'den verileri çek
+  // refreshTrigger her değiştiğinde (yeni görev eklendiğinde) API'ye tekrar istek atar
   useEffect(() => {
     fetchTasks();
-  }, []);
+  }, [refreshTrigger]);
 
   const fetchTasks = async () => {
     try {
       const response = await axios.get('http://localhost:8080/api/tasks');
       const backendTasks = response.data;
 
-      // Go'dan gelen karmaşık veriyi, TaskCard'ın anladığı TaskType formatına dönüştürüyoruz (Mapping)
       const formattedTasks: TaskType[] = backendTasks.map((t: any) => ({
         id: t.id,
         title: t.title,
         description: t.description,
         status: t.status,
         priority: t.priority,
-        // Go'dan [{id: 1, name: "design"}, ...] geliyor. Biz sadece isimleri ['design', ...] alıyoruz.
         tags: t.tags ? t.tags.map((tag: any) => tag.name) : [],
         comments: t.comments ? t.comments.length : 0,
-        attachments: 0, // Henüz dosya yükleme yapmadık
-        dueDate: 'No Date', // İleride formatlayacağız
-        // Go'dan gelen user.full_name'den baş harfleri türetiyoruz (Örn: "İbrahim" -> "İB")
+        attachments: 0,
+        dueDate: 'No Date',
         assignees: t.assignees ? t.assignees.map((user: any) => {
           const names = user.full_name.split(' ');
           const initials = names.length > 1 
@@ -46,7 +48,7 @@ export default function KanbanBoard() {
           return {
             id: user.id,
             initials: initials,
-            bgColor: 'bg-primary' // Avatar rengi şimdilik standart
+            bgColor: 'bg-primary'
           };
         }) : []
       }));
@@ -59,7 +61,6 @@ export default function KanbanBoard() {
     }
   };
 
-  // Veriler yüklenirken şık bir yükleniyor ikonu göster
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center text-text-muted gap-2">
@@ -72,7 +73,6 @@ export default function KanbanBoard() {
   return (
     <div className="flex h-full gap-6 overflow-x-auto pb-4">
       {columns.map((column) => {
-        // Gerçek state (tasks) üzerinden filtreleme yapıyoruz
         const columnTasks = tasks.filter(task => task.status === column.status);
 
         return (
