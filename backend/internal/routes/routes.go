@@ -7,6 +7,11 @@ import (
 )
 
 func SetupRoutes(r *gin.Engine) {
+	// Auth rotalarını (Login/Register) ana motora bağlıyoruz.
+	// Bu fonksiyon kendi içinde /api/auth grubunu oluşturacak.
+	AuthRoutes(r)
+
+	// Diğer standart API rotaları
 	api := r.Group("/api")
 	{
 		// Task Rotaları
@@ -22,15 +27,15 @@ func SetupRoutes(r *gin.Engine) {
 		api.POST("/workspaces", handlers.CreateWorkspace)
 		api.GET("/workspaces", handlers.GetWorkspaces)
 
-		// Project Rotaları (YENİ)
+		// Project Rotaları
 		api.POST("/projects", handlers.CreateProject)
 		api.GET("/projects", handlers.GetProjects)
 
-		// Tag Rotaları (YENİ)
+		// Tag Rotaları
 		api.POST("/tags", handlers.CreateTag)
 		api.GET("/tags", handlers.GetTags)
 
-		// Comment Rotaları (YENİ)
+		// Comment Rotaları
 		api.POST("/comments", handlers.CreateComment)
 		api.GET("/tasks/:taskId/comments", handlers.GetCommentsByTask)
 	}

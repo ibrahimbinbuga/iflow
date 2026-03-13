@@ -6,10 +6,19 @@ import (
 
 // User (Kullanıcı) Modeli
 type User struct {
-	ID        uint      `json:"id" gorm:"primaryKey"`
-	FullName  string    `json:"full_name"`
-	Email     string    `json:"email" gorm:"unique;not null"`
-	AvatarURL string    `json:"avatar_url"`
+	ID        uint   `json:"id" gorm:"primaryKey"`
+	FullName  string `json:"full_name"`
+	Email     string `json:"email" gorm:"unique;not null"`
+	AvatarURL string `json:"avatar_url"`
+
+	// YENİ: Auth ve Profil Bilgileri
+	Password   string `json:"-"` // JSON yanıtlarında şifreyi gizler (Güvenlik için çok kritik!)
+	Title      string `json:"title"`
+	Location   string `json:"location"`
+	Company    string `json:"company"`
+	Bio        string `json:"bio"`
+	Graduation string `json:"graduation"`
+
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
