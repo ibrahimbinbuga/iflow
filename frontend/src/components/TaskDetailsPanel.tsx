@@ -9,7 +9,6 @@ interface TaskDetailsPanelProps {
   onClose: () => void;
 }
 
-// Backend'den gelecek yorum yapısı
 interface CommentType {
   id: number;
   content: string;
@@ -23,7 +22,6 @@ export default function TaskDetailsPanel({ task, isOpen, onClose }: TaskDetailsP
   const [loadingComments, setLoadingComments] = useState(false);
   const [sending, setSending] = useState(false);
 
-  // Görev değiştiğinde (veya panel açıldığında) o göreve ait yorumları çek
   useEffect(() => {
     if (task && isOpen) {
       fetchComments();
@@ -49,14 +47,13 @@ export default function TaskDetailsPanel({ task, isOpen, onClose }: TaskDetailsP
 
     setSending(true);
     try {
-      // Yorum gönderiyoruz (Şimdilik user_id: 1 olarak sabitliyoruz)
       await axios.post('http://localhost:8080/api/comments', {
         task_id: task.id,
         user_id: 1, 
         content: newComment
       });
       setNewComment('');
-      fetchComments(); // Yorumları yenile
+      fetchComments();
     } catch (error) {
       console.error("Yorum gönderilemedi:", error);
     } finally {
@@ -74,10 +71,9 @@ export default function TaskDetailsPanel({ task, isOpen, onClose }: TaskDetailsP
         onClick={onClose}
       />
 
-      {/* Sağdan Açılan Panel */}
-      <div className="fixed inset-y-0 right-0 w-full max-w-2xl bg-surface border-l border-[#27272A] shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300">
+      {/* Sağdan Kayarak Açılan Panel (Animasyon sınıfı buraya eklendi) */}
+      <div className="fixed inset-y-0 right-0 w-full max-w-2xl bg-surface border-l border-[#27272A] shadow-2xl z-50 flex flex-col animate-slide-in-right">
         
-        {/* Panel Üst Bar (Header) */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#27272A]">
           <div className="flex items-center gap-3">
             <span className="text-text-muted text-sm font-medium">Task-#{task.id}</span>
@@ -90,10 +86,7 @@ export default function TaskDetailsPanel({ task, isOpen, onClose }: TaskDetailsP
           </button>
         </div>
 
-        {/* Panel İçeriği (Kaydırılabilir alan) */}
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-          
-          {/* Görev Temel Bilgileri */}
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-white mb-4 leading-tight">{task.title}</h2>
             
@@ -118,7 +111,6 @@ export default function TaskDetailsPanel({ task, isOpen, onClose }: TaskDetailsP
 
           <hr className="border-[#27272A] mb-8" />
 
-          {/* Yorumlar (Activity Stream) Alanı */}
           <div>
             <div className="flex items-center gap-2 mb-6">
               <MessageSquare className="w-5 h-5 text-white" />
@@ -134,7 +126,7 @@ export default function TaskDetailsPanel({ task, isOpen, onClose }: TaskDetailsP
                 {comments.map(comment => (
                   <div key={comment.id} className="flex gap-4">
                     <div className="w-8 h-8 rounded-full bg-primary flex-shrink-0 flex items-center justify-center text-white text-xs font-bold">
-                      IB {/* Şimdilik kullanıcı adını sabit harfle gösteriyoruz */}
+                      IB
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
@@ -158,7 +150,6 @@ export default function TaskDetailsPanel({ task, isOpen, onClose }: TaskDetailsP
           </div>
         </div>
 
-        {/* Alt Kısım: Yorum Yazma Formu */}
         <div className="p-4 border-t border-[#27272A] bg-surface">
           <form onSubmit={handleSendComment} className="relative">
             <input

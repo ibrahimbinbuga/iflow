@@ -12,7 +12,21 @@ body {
   background-color: var(--color-background);
   color: var(--color-text-main);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-  .custom-scrollbar::-webkit-scrollbar-thumb { background: #3F3F46; border-radius: 4px; }
-  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 }
+
+/* ========================================= */
+/* KAYMA (SLIDE) VE KAYDIRMA ÇUBUĞU AYARLARI */
+/* ========================================= */
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #3F3F46; border-radius: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
