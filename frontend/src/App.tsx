@@ -1,20 +1,19 @@
 import { useState, useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import KanbanBoard from './components/KanbanBoard';
 import CreateTaskModal from './components/CreateTaskModal';
+import Profile from './pages/Profile';
 
 function App() {
-  // YENİ: Tema state'i (Varsayılan olarak karanlık başlatıyoruz)
   const [isDarkMode, setIsDarkMode] = useState(true);
-  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterHighPriority, setFilterHighPriority] = useState(false);
   const [sortByPriority, setSortByPriority] = useState(false);
 
-  // Tema değiştiğinde HTML etiketine 'dark' class'ını ekle/çıkar
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -40,18 +39,24 @@ function App() {
           setFilterHighPriority={setFilterHighPriority}
           sortByPriority={sortByPriority}
           setSortByPriority={setSortByPriority}
-          // Tema verisini Header'a gönderiyoruz
           isDarkMode={isDarkMode}
           setIsDarkMode={setIsDarkMode}
         />
 
-        <div className="flex-1 overflow-hidden p-6">
-          <KanbanBoard 
-            refreshTrigger={refreshKey} 
-            searchQuery={searchQuery} 
-            filterHighPriority={filterHighPriority}
-            sortByPriority={sortByPriority}
-          />
+        <div className="flex-1 overflow-auto p-6">
+          {/* YENİ: React Router ile Sayfalar Arası Geçiş */}
+          <Routes>
+            <Route path="/" element={
+              <KanbanBoard 
+                refreshTrigger={refreshKey} 
+                searchQuery={searchQuery} 
+                filterHighPriority={filterHighPriority}
+                sortByPriority={sortByPriority}
+              />
+            } />
+            
+            <Route path="/profile" element={<Profile />} />
+          </Routes>
         </div>
       </main>
 

@@ -1,26 +1,29 @@
 import { useState } from 'react';
 import { LayoutGrid, Building2, User, Settings, ChevronDown, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom'; // YENİ EKLENDİ
 
 export default function Sidebar() {
   const [isCompanyOpen, setIsCompanyOpen] = useState(true);
 
   return (
     <aside className="w-64 bg-background border-r border-border-main h-screen flex flex-col text-sm shrink-0 transition-colors duration-300">
-      <div className="h-16 flex items-center px-6 font-bold text-lg tracking-wide text-text-main gap-2 border-b border-border-main">
+      {/* YENİ: div yerine Link kullanıyoruz ki tıklayınca anasayfaya (Board'a) dönsün */}
+      <Link to="/" className="h-16 flex items-center px-6 font-bold text-lg tracking-wide text-text-main gap-2 border-b border-border-main hover:opacity-80 transition-opacity">
         <LayoutGrid className="text-primary w-5 h-5" />
         iFlow
-      </div>
+      </Link>
 
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6 custom-scrollbar">
+      {/* ... DOSYANIN GERİ KALANI AYNI ... */}
         <div>
           <h3 className="text-xs font-semibold text-text-muted mb-3 px-3 tracking-wider">
             WORKSPACES
           </h3>
           <div className="space-y-1">
-            <button className="w-full flex items-center gap-2 px-3 py-2 text-text-muted hover:text-text-main hover:bg-surface rounded-md transition-colors">
+            <Link to="/profile" className="w-full flex items-center gap-2 px-3 py-2 text-text-muted hover:text-text-main hover:bg-surface rounded-md transition-colors">
               <User className="w-4 h-4" />
               <span>Personal</span>
-            </button>
+            </Link>
             
             <div className="pt-1">
               <button 
@@ -44,10 +47,10 @@ export default function Sidebar() {
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                     <span>Mobile App</span>
                   </button>
-                  <button className="w-full flex items-center gap-2 px-3 py-1.5 text-text-main bg-surface rounded-md transition-colors font-medium">
+                  <Link to="/" className="w-full flex items-center gap-2 px-3 py-1.5 text-text-main bg-surface rounded-md transition-colors font-medium">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
                     <span>Website Redesign</span>
-                  </button>
+                  </Link>
                   <button className="w-full flex items-center gap-2 px-3 py-1.5 text-text-muted hover:text-text-main hover:bg-surface rounded-md transition-colors">
                     <span className="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
                     <span>Brand Guidelines</span>
