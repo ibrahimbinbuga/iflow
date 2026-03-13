@@ -6,12 +6,12 @@ import CreateTaskModal from './components/CreateTaskModal';
 
 function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  // Board'un yenilenmesini tetikleyecek basit bir sayaç
   const [refreshKey, setRefreshKey] = useState(0);
+  
+  // YENİ: Arama metnini tutan state
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleTaskCreated = () => {
-    // Sayaç artınca KanbanBoard'daki useEffect çalışacak ve verileri yeniden çekecek
     setRefreshKey(prev => prev + 1);
   };
 
@@ -20,14 +20,22 @@ function App() {
       <Sidebar />
 
       <main className="flex-1 flex flex-col min-w-0">
-        <Header onOpenCreateModal={() => setIsModalOpen(true)} />
+        {/* Search state'lerini Header'a gönderiyoruz */}
+        <Header 
+          onOpenCreateModal={() => setIsModalOpen(true)} 
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+        />
 
         <div className="flex-1 overflow-hidden p-6">
-          <KanbanBoard refreshTrigger={refreshKey} />
+          {/* Search verisini Board'a gönderiyoruz */}
+          <KanbanBoard 
+            refreshTrigger={refreshKey} 
+            searchQuery={searchQuery} 
+          />
         </div>
       </main>
 
-      {/* Modal Bileşenimiz (Açıkken ekranın üzerine biner) */}
       <CreateTaskModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 

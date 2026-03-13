@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Plus, Loader2 } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import TaskCard, { type TaskType } from './TaskCard';
-import TaskDetailsPanel from './TaskDetailsPanel'; // YENİ EKLENDİ
+import TaskDetailsPanel from './TaskDetailsPanel';
 
 const columns = [
   { title: 'To Do', status: 'To Do', dotColor: 'bg-gray-400' },
@@ -14,13 +14,13 @@ const columns = [
 
 interface KanbanBoardProps {
   refreshTrigger: number;
+  searchQuery: string; // YENİ: Arama prop'u eklendi
 }
 
-export default function KanbanBoard({ refreshTrigger }: KanbanBoardProps) {
+export default function KanbanBoard({ refreshTrigger, searchQuery }: KanbanBoardProps) {
   const [tasks, setTasks] = useState<TaskType[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // YENİ: Hangi görevin seçildiğini ve panelin açık olup olmadığını tutan state'ler
   const [selectedTask, setSelectedTask] = useState<TaskType | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
@@ -59,7 +59,7 @@ export default function KanbanBoard({ refreshTrigger }: KanbanBoardProps) {
 
       setTasks(formattedTasks);
     } catch (error) {
-      console.error("Görevler çekilirken hata oluştu:", error);
+      console.error("Görevler çekilirken hata:", error);
     } finally {
       setLoading(false);
     }
@@ -85,12 +85,11 @@ export default function KanbanBoard({ refreshTrigger }: KanbanBoardProps) {
         status: newStatus
       });
     } catch (error) {
-      console.error("Görev durumu güncellenirken hata:", error);
+      console.error("Hata:", error);
       fetchTasks();
     }
   };
 
-  // YENİ: Göreve tıklandığında paneli açan fonksiyon
   const handleTaskClick = (task: TaskType) => {
     setSelectedTask(task);
     setIsPanelOpen(true);
@@ -105,12 +104,23 @@ export default function KanbanBoard({ refreshTrigger }: KanbanBoardProps) {
     );
   }
 
+  // YENİ: Görevleri arama metnine göre filtrele (Başlık, Açıklama veya Etiketlerde arar)
+  const filteredTasks = tasks.filter(task => {
+    const query = searchQuery.toLowerCase();
+    return (
+      task.title.toLowerCase().includes(query) ||
+      task.description.toLowerCase().includes(query) ||
+      task.tags.some(tag => tag.toLowerCase().includes(query))
+    );
+  });
+
   return (
     <>
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex h-full gap-6 overflow-x-auto pb-4">
           {columns.map((column) => {
-            const columnTasks = tasks.filter(task => task.status === column.status);
+            // task.filter yerine artık filteredTasks.filter kullanıyoruz
+            const columnTasks = filteredTasks.filter(task => task.status === column.status);
 
             return (
               <div key={column.title} className="flex-shrink-0 w-[320px] flex flex-col">
@@ -145,7 +155,6 @@ export default function KanbanBoard({ refreshTrigger }: KanbanBoardProps) {
                               {...provided.dragHandleProps}
                               className={`${snapshot.isDragging ? 'opacity-80 scale-105' : 'opacity-100'} transition-transform duration-200`}
                             >
-                              {/* YENİ: onClick fonksiyonunu karta iletiyoruz */}
                               <TaskCard task={task} onClick={() => handleTaskClick(task)} />
                             </div>
                           )}
@@ -161,7 +170,6 @@ export default function KanbanBoard({ refreshTrigger }: KanbanBoardProps) {
         </div>
       </DragDropContext>
 
-      {/* YENİ: Görev Detay Paneli */}
       <TaskDetailsPanel 
         task={selectedTask}
         isOpen={isPanelOpen}

@@ -1,19 +1,23 @@
 import { Search, Sun, Bell, LayoutGrid, List, Filter, ArrowUpDown, Plus } from 'lucide-react';
 
-// App.tsx'ten gelecek olan fonksiyonu tanımlıyoruz
 interface HeaderProps {
   onOpenCreateModal: () => void;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
 }
 
-export default function Header({ onOpenCreateModal }: HeaderProps) {
+export default function Header({ onOpenCreateModal, searchQuery, setSearchQuery }: HeaderProps) {
   return (
     <header className="flex flex-col bg-background shrink-0">
       <div className="h-16 flex items-center justify-between px-6 border-b border-[#27272A]">
         <div className="flex-1 max-w-2xl relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+          {/* YENİ: input alanına value ve onChange bağlandı */}
           <input
             type="text"
-            placeholder="Search tasks, projects, or people..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search tasks, descriptions, or tags..."
             className="w-full bg-surface border border-[#3F3F46] rounded-md pl-10 pr-4 py-2 text-sm text-white placeholder-text-muted focus:outline-none focus:border-primary transition-colors"
           />
         </div>
@@ -70,7 +74,6 @@ export default function Header({ onOpenCreateModal }: HeaderProps) {
             <span>Sort</span>
           </button>
 
-          {/* Modal'ı açacak olan asıl butonumuz */}
           <button 
             onClick={onOpenCreateModal}
             className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-blue-600 text-white text-sm font-medium rounded-md transition-colors shadow-sm ml-2"
