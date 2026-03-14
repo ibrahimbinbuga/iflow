@@ -17,7 +17,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await axios.post('https://iflow-m6se.onrender.com/api/auth/register', formData);
+      await axios.post('import.meta.env.VITE_API_URL/api/auth/register', formData);
       navigate('/login'); // Kayıt başarılıysa girişe yönlendir
     } catch (err: any) {
       setError(err.response?.data?.error || 'Kayıt olurken bir hata oluştu.');

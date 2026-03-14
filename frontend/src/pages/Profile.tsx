@@ -62,7 +62,7 @@ export default function Profile() {
 
   const fetchDynamicStats = async () => {
     try {
-      const response = await axios.get('https://iflow-m6se.onrender.com/api/tasks');
+      const response = await axios.get('import.meta.env.VITE_API_URL/api/tasks');
       const tasks = response.data || [];
       const completed = tasks.filter((t: any) => t.status === 'Done').length;
       const uniqueUsers = new Set();
@@ -83,7 +83,7 @@ export default function Profile() {
     setSaving(true);
     try {
       // 1. Go API'sine Güncelleme İsteği At
-      const response = await axios.put(`https://iflow-m6se.onrender.com/api/users/${userData.id}`, editForm);
+      const response = await axios.put(`import.meta.env.VITE_API_URL/api/users/${userData.id}`, editForm);
       
       // 2. LocalStorage'ı Güncelle (Header'ın da güncellenmesi için)
       const userStr = localStorage.getItem('user');
