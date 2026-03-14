@@ -19,6 +19,8 @@ type User struct {
 	Bio        string `json:"bio"`
 	Graduation string `json:"graduation"`
 
+	Workspaces []Workspace `json:"workspaces" gorm:"many2many:workspace_members;"`
+
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -27,7 +29,9 @@ type User struct {
 type Workspace struct {
 	ID        uint      `json:"id" gorm:"primaryKey"`
 	Name      string    `json:"name" gorm:"not null"`
+	Type      string    `json:"type"`
 	OwnerID   uint      `json:"owner_id"`
+	Members   []User    `json:"members" gorm:"many2many:workspace_members;"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

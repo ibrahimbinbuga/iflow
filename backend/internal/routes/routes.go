@@ -26,7 +26,9 @@ func SetupRoutes(r *gin.Engine) {
 
 		// Workspace Rotaları
 		api.POST("/workspaces", handlers.CreateWorkspace)
-		api.GET("/workspaces", handlers.GetWorkspaces)
+		api.GET("/users/:userId/workspaces", handlers.GetUserWorkspaces)
+		api.POST("/workspaces/:id/members", handlers.AddMemberByEmail)
+		api.GET("/workspaces/:id/tasks", handlers.GetTasksByWorkspace)
 
 		// Project Rotaları
 		api.POST("/projects", handlers.CreateProject)
