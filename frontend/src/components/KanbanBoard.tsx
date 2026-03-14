@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Loader2, UserPlus } from 'lucide-react';
+import { Loader2, UserPlus } from 'lucide-react'; // Plus butonunu importlardan sildik
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import TaskCard, { type TaskType } from './TaskCard';
 import TaskDetailsPanel from './TaskDetailsPanel';
@@ -53,23 +53,27 @@ export default function KanbanBoard({
     return () => window.removeEventListener('workspaceChanged', handleWorkspaceChange);
   }, [refreshTrigger]);
 
-  // YENİ: Bildirimden gelen "Görevi Aç" sinyalini dinleyen Effect
+  // YENİ: Akıllı Işınlanma (Takım uyuşmuyorsa kullanıcıyı uyar)
   useEffect(() => {
     const handleOpenTask = (e: Event) => {
       const customEvent = e as CustomEvent;
-      const taskIdToOpen = customEvent.detail;
+      const taskIdToOpen = Number(customEvent.detail);
       
-      // Ekranda o an yüklü olan görevlerin (tasks) içinden o ID'li görevi bul
+      if (!taskIdToOpen) return;
+
       const targetTask = tasks.find(t => t.id === taskIdToOpen);
+      
       if (targetTask) {
         setSelectedTask(targetTask);
-        setIsPanelOpen(true); // Sağdaki paneli aç!
+        setIsPanelOpen(true);
+      } else {
+        alert("This task belongs to another team's workspace! Please select the correct team from the sidebar first.");
       }
     };
 
     window.addEventListener('openTaskFromNotification', handleOpenTask);
     return () => window.removeEventListener('openTaskFromNotification', handleOpenTask);
-  }, [tasks]); // Bu bağımlılık (tasks) önemli, liste değiştikçe güncel veriye bakar.
+  }, [tasks]);
 
   const fetchTasks = async () => {
     const workspaceId = localStorage.getItem('activeWorkspaceId');
@@ -179,9 +183,7 @@ export default function KanbanBoard({
                       {columnTasks.length}
                     </span>
                   </div>
-                  <button className="text-text-muted hover:text-text-main transition-colors duration-300">
-                    <Plus className="w-4 h-4" />
-                  </button>
+                  {/* + BUTONU BURADAN SİLİNDİ, ARAYÜZ ARTIK ÇOK DAHA TEMİZ! */}
                 </div>
 
                 <Droppable droppableId={column.status}>
