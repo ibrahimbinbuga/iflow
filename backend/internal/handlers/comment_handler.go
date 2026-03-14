@@ -50,6 +50,7 @@ func CreateComment(c *gin.Context) {
 						notification := models.Notification{
 							UserID:  member.ID,
 							Message: authorName + " commented on task: " + task.Title,
+							TaskID:  task.ID,
 						}
 						database.DB.Create(&notification)
 					}

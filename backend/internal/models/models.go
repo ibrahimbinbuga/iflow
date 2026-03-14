@@ -85,6 +85,7 @@ type Notification struct {
 	ID        uint      `json:"id" gorm:"primaryKey"`
 	UserID    uint      `json:"user_id"` // Bildirimin gideceği kişi
 	Message   string    `json:"message"`
+	TaskID    uint      `json:"task_id"`
 	IsRead    bool      `json:"is_read" gorm:"default:false"` // Okundu mu?
 	CreatedAt time.Time `json:"created_at"`
 }

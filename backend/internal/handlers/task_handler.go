@@ -39,6 +39,7 @@ func CreateTask(c *gin.Context) {
 				notification := models.Notification{
 					UserID:  member.ID,
 					Message: "A new task was added to " + workspace.Name + ": " + task.Title,
+					TaskID:  task.ID,
 				}
 				database.DB.Create(&notification)
 			}
