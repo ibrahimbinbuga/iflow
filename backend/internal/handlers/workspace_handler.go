@@ -37,6 +37,13 @@ func CreateWorkspace(c *gin.Context) {
 	var user models.User
 	if err := database.DB.First(&user, input.OwnerID).Error; err == nil {
 		database.DB.Model(&workspace).Association("Members").Append(&user)
+
+		// Takım sahibine de ilk bildirimini atalım
+		notification := models.Notification{
+			UserID:  user.ID,
+			Message: "You have created a new team: " + workspace.Name,
+		}
+		database.DB.Create(&notification)
 	}
 
 	c.JSON(http.StatusCreated, workspace)
@@ -83,6 +90,13 @@ func AddMemberByEmail(c *gin.Context) {
 	// Kullanıcıyı Workspace'in üyelerine ekle (Çoka-Çok ilişki)
 	database.DB.Model(&workspace).Association("Members").Append(&user)
 
+	// YENİ EKLENEN KISIM: Davet edilen kullanıcıya bildirim gönder
+	notification := models.Notification{
+		UserID:  user.ID,
+		Message: "You have been added to a new team: " + workspace.Name,
+	}
+	database.DB.Create(&notification)
+
 	c.JSON(http.StatusOK, gin.H{"message": "Kullanıcı takıma başarıyla eklendi", "user": user})
 }
 
@@ -108,4 +122,23 @@ func GetTasksByWorkspace(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, tasks)
+}
+
+// --- YENİ BİLDİRİM (NOTIFICATION) FONKSİYONLARI ---
+
+// 5. Kullanıcının bildirimlerini getir
+func GetUserNotifications(c *gin.Context) {
+	userID := c.Param("userId")
+	var notifications []models.Notification
+
+	// En yeniler en üstte olacak şekilde (Order) getir
+	database.DB.Where("user_id = ?", userID).Order("created_at desc").Find(&notifications)
+	c.JSON(http.StatusOK, notifications)
+}
+
+// 6. Bildirimi okundu olarak işaretle
+func MarkNotificationRead(c *gin.Context) {
+	notifID := c.Param("id")
+	database.DB.Model(&models.Notification{}).Where("id = ?", notifID).Update("is_read", true)
+	c.JSON(http.StatusOK, gin.H{"message": "Marked as read"})
 }

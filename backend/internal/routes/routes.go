@@ -41,5 +41,9 @@ func SetupRoutes(r *gin.Engine) {
 		// Comment Rotaları
 		api.POST("/comments", handlers.CreateComment)
 		api.GET("/tasks/:taskId/comments", handlers.GetCommentsByTask)
+
+		// Bildirim Rotaları
+		api.GET("/users/:userId/notifications", handlers.GetUserNotifications)
+		api.PUT("/notifications/:id/read", handlers.MarkNotificationRead)
 	}
 }

@@ -79,3 +79,12 @@ type Comment struct {
 	Content   string    `json:"content" gorm:"not null"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+// Bildirimler (Notifications) Modeli
+type Notification struct {
+	ID        uint      `json:"id" gorm:"primaryKey"`
+	UserID    uint      `json:"user_id"` // Bildirimin gideceği kişi
+	Message   string    `json:"message"`
+	IsRead    bool      `json:"is_read" gorm:"default:false"` // Okundu mu?
+	CreatedAt time.Time `json:"created_at"`
+}
