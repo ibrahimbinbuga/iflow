@@ -12,8 +12,10 @@ import (
 )
 
 func main() {
+	// Veritabanına bağlan
 	database.ConnectDB()
 
+	// YENİ: &models.Notification{} buraya eklendi!
 	err := database.DB.AutoMigrate(
 		&models.User{},
 		&models.Workspace{},
@@ -21,6 +23,7 @@ func main() {
 		&models.Tag{},
 		&models.Task{},
 		&models.Comment{},
+		&models.Notification{}, // <-- İşte bildirimleri kurtaracak kahramanımız!
 	)
 	if err != nil {
 		log.Fatal("Tablolar oluşturulamadı: ", err)
@@ -48,6 +51,7 @@ func main() {
 		})
 	})
 
+	// Rotaları ayarla
 	routes.SetupRoutes(r)
 
 	log.Println("Sunucu 8080 portunda başlatılıyor...")
