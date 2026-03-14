@@ -38,30 +38,42 @@ export default function KanbanBoard({
   const [selectedTask, setSelectedTask] = useState<TaskType | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   
-  // YENİ: Takım davet modalı için state'ler
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const activeWorkspaceId = localStorage.getItem('activeWorkspaceId') ? Number(localStorage.getItem('activeWorkspaceId')) : null;
 
   useEffect(() => {
     fetchTasks();
 
-    // Sidebar'dan gelen "Takım Değişti" sinyalini dinliyoruz
     const handleWorkspaceChange = () => {
       setLoading(true);
       fetchTasks();
     };
 
     window.addEventListener('workspaceChanged', handleWorkspaceChange);
-    
-    // Bileşen ekrandan kalktığında dinleyiciyi temizle
     return () => window.removeEventListener('workspaceChanged', handleWorkspaceChange);
   }, [refreshTrigger]);
 
+  // YENİ: Bildirimden gelen "Görevi Aç" sinyalini dinleyen Effect
+  useEffect(() => {
+    const handleOpenTask = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const taskIdToOpen = customEvent.detail;
+      
+      // Ekranda o an yüklü olan görevlerin (tasks) içinden o ID'li görevi bul
+      const targetTask = tasks.find(t => t.id === taskIdToOpen);
+      if (targetTask) {
+        setSelectedTask(targetTask);
+        setIsPanelOpen(true); // Sağdaki paneli aç!
+      }
+    };
+
+    window.addEventListener('openTaskFromNotification', handleOpenTask);
+    return () => window.removeEventListener('openTaskFromNotification', handleOpenTask);
+  }, [tasks]); // Bu bağımlılık (tasks) önemli, liste değiştikçe güncel veriye bakar.
+
   const fetchTasks = async () => {
-    // 1. Seçili takımın ID'sini al
     const workspaceId = localStorage.getItem('activeWorkspaceId');
     
-    // Eğer henüz bir takım seçilmemişse boş liste göster
     if (!workspaceId) {
       setTasks([]);
       setLoading(false);
@@ -69,7 +81,6 @@ export default function KanbanBoard({
     }
 
     try {
-      // Sadece bu Workspace'e (Takıma) ait görevleri çekiyoruz!
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/workspaces/${workspaceId}/tasks`);
       
       const formattedTasks: TaskType[] = (response.data || []).map((t: any) => ({
@@ -141,8 +152,6 @@ export default function KanbanBoard({
 
   return (
     <div className="flex flex-col h-full">
-      
-      {/* YENİ EKLENEN BOARD BAŞLIĞI VE DAVET BUTONU */}
       <div className="flex items-center justify-between mb-6 shrink-0 pr-2 transition-colors duration-300">
         <h1 className="text-2xl font-bold text-text-main">Team Board</h1>
         {activeWorkspaceId && (
@@ -208,7 +217,6 @@ export default function KanbanBoard({
         </div>
       </DragDropContext>
 
-      {/* YENİ MODALLAR */}
       <TaskDetailsPanel task={selectedTask} isOpen={isPanelOpen} onClose={() => setIsPanelOpen(false)} />
       
       <InviteMemberModal 
