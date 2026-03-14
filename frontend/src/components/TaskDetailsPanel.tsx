@@ -22,11 +22,40 @@ export default function TaskDetailsPanel({ task, isOpen, onClose }: TaskDetailsP
   const [loadingComments, setLoadingComments] = useState(false);
   const [sending, setSending] = useState(false);
 
+  // YENİ: Kullanıcı listesini ve aktif kullanıcıyı tutacağımız state'ler
+  const [usersMap, setUsersMap] = useState<Record<number, { name: string, initials: string }>>({});
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
   useEffect(() => {
+    // 1. O an giriş yapmış kullanıcıyı LocalStorage'dan al
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      setCurrentUser(JSON.parse(userStr));
+    }
+
     if (task && isOpen) {
       fetchComments();
+      fetchUsers(); // Yorum yapanların isimlerini eşleştirmek için
     }
   }, [task, isOpen]);
+
+  // 2. Yorum yapanların ID'lerini isimlere çevirebilmek için tüm kullanıcıları çek
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users`);
+      const map: Record<number, { name: string, initials: string }> = {};
+
+      response.data.forEach((u: any) => {
+        const names = (u.full_name || 'User').split(' ');
+        const initials = names.length > 1 ? (names[0][0] + names[1][0]).toUpperCase() : names[0].substring(0, 2).toUpperCase();
+        map[u.id] = { name: u.full_name || `User ${u.id}`, initials };
+      });
+
+      setUsersMap(map);
+    } catch (error) {
+      console.error("Kullanıcılar çekilemedi:", error);
+    }
+  };
 
   const fetchComments = async () => {
     if (!task) return;
@@ -43,10 +72,17 @@ export default function TaskDetailsPanel({ task, isOpen, onClose }: TaskDetailsP
 
   const handleSendComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim() || !task) return;
+    // Eğer kullanıcı giriş yapmamışsa veya yorum boşsa gönderme
+    if (!newComment.trim() || !task || !currentUser) return;
+    
     setSending(true);
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/comments`, { task_id: task.id, user_id: 1, content: newComment });
+      // 3. Sabit 1 yerine currentUser.id kullanıyoruz
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/comments`, { 
+        task_id: task.id, 
+        user_id: currentUser.id, 
+        content: newComment 
+      });
       setNewComment('');
       fetchComments();
     } catch (error) {
@@ -98,15 +134,27 @@ export default function TaskDetailsPanel({ task, isOpen, onClose }: TaskDetailsP
               <div className="flex items-center justify-center py-8 text-text-muted"><Loader2 className="w-6 h-6 animate-spin" /></div>
             ) : comments.length > 0 ? (
               <div className="space-y-6 mb-8">
-                {comments.map(comment => (
-                  <div key={comment.id} className="flex gap-4">
-                    <div className="w-8 h-8 rounded-full bg-primary flex-shrink-0 flex items-center justify-center text-white text-xs font-bold ring-2 ring-surface">IB</div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1"><span className="text-sm font-medium text-text-main transition-colors">İbrahim</span><span className="text-xs text-text-muted">{new Date(comment.created_at).toLocaleDateString()}</span></div>
-                      <div className="text-sm text-text-muted bg-background p-3 rounded-md border border-border-main leading-relaxed transition-colors">{comment.content}</div>
+                {comments.map(comment => {
+                  // 4. Yorum sahibini usersMap üzerinden bul, bulamazsan varsayılan değer ver
+                  const commenter = usersMap[comment.user_id] || { name: `User ${comment.user_id}`, initials: 'U' };
+                  
+                  return (
+                    <div key={comment.id} className="flex gap-4">
+                      <div className="w-8 h-8 rounded-full bg-primary flex-shrink-0 flex items-center justify-center text-white text-xs font-bold ring-2 ring-surface">
+                        {commenter.initials}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium text-text-main transition-colors">{commenter.name}</span>
+                          <span className="text-xs text-text-muted">{new Date(comment.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <div className="text-sm text-text-muted bg-background p-3 rounded-md border border-border-main leading-relaxed transition-colors">
+                          {comment.content}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-8 text-sm text-text-muted bg-background rounded-lg border border-dashed border-border-main mb-8 transition-colors">No comments yet.</div>
