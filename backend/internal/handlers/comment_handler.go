@@ -23,6 +23,42 @@ func CreateComment(c *gin.Context) {
 		return
 	}
 
+	// --- YENİ EKLENEN BİLDİRİM (FAN-OUT) MANTIĞI ---
+	// 1. Yorumun yapıldığı görevi (Task) buluyoruz
+	var task models.Task
+	if err := database.DB.First(&task, comment.TaskID).Error; err == nil {
+
+		// 2. O görevin bağlı olduğu projeyi (Project) buluyoruz
+		var project models.Project
+		if err := database.DB.First(&project, task.ProjectID).Error; err == nil {
+
+			// 3. O projenin bağlı olduğu takımı (Workspace) ve Üyelerini buluyoruz
+			var workspace models.Workspace
+			if err := database.DB.Preload("Members").First(&workspace, project.WorkspaceID).Error; err == nil {
+
+				// 4. Yorumu yazan kişinin adını alalım (Bildirimde şık dursun diye)
+				var author models.User
+				authorName := "Someone"
+				if err := database.DB.First(&author, comment.UserID).Error; err == nil {
+					authorName = author.FullName
+				}
+
+				// 5. Takımdaki herkese bildirim oluştur (YORUMU YAZAN HARİÇ!)
+				for _, member := range workspace.Members {
+					// Eğer üyenin ID'si, yorumu yazan kişinin ID'sine EŞİT DEĞİLSE bildirim at
+					if member.ID != comment.UserID {
+						notification := models.Notification{
+							UserID:  member.ID,
+							Message: authorName + " commented on task: " + task.Title,
+						}
+						database.DB.Create(&notification)
+					}
+				}
+			}
+		}
+	}
+	// ----------------------------------------------
+
 	c.JSON(http.StatusCreated, comment)
 }
 

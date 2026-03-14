@@ -25,6 +25,27 @@ func CreateTask(c *gin.Context) {
 		return
 	}
 
+	// --- YENİ EKLENEN BİLDİRİM (FAN-OUT) MANTIĞI ---
+	// 1. Görevin hangi projeye ait olduğunu buluyoruz
+	var project models.Project
+	if err := database.DB.First(&project, task.ProjectID).Error; err == nil {
+
+		// 2. O projenin hangi takıma (Workspace) ait olduğunu ve o takımın üyelerini buluyoruz
+		var workspace models.Workspace
+		if err := database.DB.Preload("Members").First(&workspace, project.WorkspaceID).Error; err == nil {
+
+			// 3. Takımdaki her bir üyeye bildirim oluşturuyoruz
+			for _, member := range workspace.Members {
+				notification := models.Notification{
+					UserID:  member.ID,
+					Message: "A new task was added to " + workspace.Name + ": " + task.Title,
+				}
+				database.DB.Create(&notification)
+			}
+		}
+	}
+	// ----------------------------------------------
+
 	// Başarılıysa oluşturulan görevi geri dön
 	c.JSON(http.StatusCreated, task)
 }
