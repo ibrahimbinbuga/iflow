@@ -11,6 +11,7 @@ export default function Sidebar() {
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<number | null>(null);
 
   // Kullanıcının üye olduğu takımları (workspaces) veritabanından çekme
+  // Kullanıcının üye olduğu takımları (workspaces) veritabanından çekme
   const fetchWorkspaces = async () => {
     const userStr = localStorage.getItem('user');
     if (!userStr) return;
@@ -18,17 +19,28 @@ export default function Sidebar() {
     const user = JSON.parse(userStr);
     
     try {
-      // YENİ ROTA: Sadece bu kullanıcının takımlarını getir
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/${user.id}/workspaces`);
       const userWorkspaces = response.data || [];
       setWorkspaces(userWorkspaces);
 
-      // Eğer henüz seçili bir takım yoksa ve liste boş değilse, ilk takımı otomatik seç
       const savedActiveId = localStorage.getItem('activeWorkspaceId');
-      if (!savedActiveId && userWorkspaces.length > 0) {
-        handleSelectWorkspace(userWorkspaces[0].id);
-      } else if (savedActiveId) {
+      
+      // YENİ: Tarayıcıdaki eski takım ID'si gerçekten bu kullanıcının takımlarından biri mi?
+      const isIdValid = savedActiveId ? userWorkspaces.some((w: any) => w.id === Number(savedActiveId)) : false;
+
+      if (isIdValid) {
+        // Eğer ID geçerliyse ve bu kullanıcıya aitse, onu aktif yap
         setActiveWorkspaceId(Number(savedActiveId));
+      } else {
+        // ID bu kullanıcıya ait değilse (eski hesaptan kaldıysa) hafızadan kazı!
+        localStorage.removeItem('activeWorkspaceId');
+        setActiveWorkspaceId(null);
+        window.dispatchEvent(new Event('workspaceChanged')); // Board'a "Verileri Temizle" sinyali gönder
+        
+        // Eğer kullanıcının kendi takımları varsa, ilkini otomatik seç
+        if (userWorkspaces.length > 0) {
+          handleSelectWorkspace(userWorkspaces[0].id);
+        }
       }
 
     } catch (error) {

@@ -54,10 +54,11 @@ function App() {
           setSortByPriority={setSortByPriority}
           isDarkMode={isDarkMode}
           setIsDarkMode={setIsDarkMode}
-          // Header'a çıkış yapma fonksiyonu eklemek istersen diye:
           onLogout={() => {
+            // YENİ: Çıkış yaparken hayalet verileri de (aktif takım) temizle!
             localStorage.removeItem('token');
             localStorage.removeItem('user');
+            localStorage.removeItem('activeWorkspaceId'); // <-- HAYALET AVCISI SATIR
             setIsAuthenticated(false);
             navigate('/login');
           }}
