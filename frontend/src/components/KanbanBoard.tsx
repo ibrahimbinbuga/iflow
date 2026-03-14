@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2, UserPlus } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import TaskCard, { type TaskType } from './TaskCard';
 import TaskDetailsPanel from './TaskDetailsPanel';
+import InviteMemberModal from './InviteMemberModal';
 
 const columns = [
   { title: 'To Do', status: 'To Do', dotColor: 'bg-zinc-400' },
@@ -36,11 +37,15 @@ export default function KanbanBoard({
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<TaskType | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  
+  // YENİ: Takım davet modalı için state'ler
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const activeWorkspaceId = localStorage.getItem('activeWorkspaceId') ? Number(localStorage.getItem('activeWorkspaceId')) : null;
 
   useEffect(() => {
     fetchTasks();
 
-    // YENİ: Sidebar'dan gelen "Takım Değişti" sinyalini dinliyoruz
+    // Sidebar'dan gelen "Takım Değişti" sinyalini dinliyoruz
     const handleWorkspaceChange = () => {
       setLoading(true);
       fetchTasks();
@@ -48,7 +53,7 @@ export default function KanbanBoard({
 
     window.addEventListener('workspaceChanged', handleWorkspaceChange);
     
-    // Bileşen ekrandan kalktığında dinleyiciyi temizle (Hafıza sızıntısını önler)
+    // Bileşen ekrandan kalktığında dinleyiciyi temizle
     return () => window.removeEventListener('workspaceChanged', handleWorkspaceChange);
   }, [refreshTrigger]);
 
@@ -64,7 +69,7 @@ export default function KanbanBoard({
     }
 
     try {
-      // 2. YENİ ROTA: Sadece bu Workspace'e (Takıma) ait görevleri çekiyoruz!
+      // Sadece bu Workspace'e (Takıma) ait görevleri çekiyoruz!
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/workspaces/${workspaceId}/tasks`);
       
       const formattedTasks: TaskType[] = (response.data || []).map((t: any) => ({
@@ -135,7 +140,22 @@ export default function KanbanBoard({
   }
 
   return (
-    <>
+    <div className="flex flex-col h-full">
+      
+      {/* YENİ EKLENEN BOARD BAŞLIĞI VE DAVET BUTONU */}
+      <div className="flex items-center justify-between mb-6 shrink-0 pr-2 transition-colors duration-300">
+        <h1 className="text-2xl font-bold text-text-main">Team Board</h1>
+        {activeWorkspaceId && (
+          <button 
+            onClick={() => setIsInviteModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 rounded-md transition-colors"
+          >
+            <UserPlus className="w-4 h-4" />
+            Invite Teammate
+          </button>
+        )}
+      </div>
+
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex h-full gap-6 overflow-x-auto pb-4 transition-colors duration-300">
           {columns.map((column) => {
@@ -188,7 +208,14 @@ export default function KanbanBoard({
         </div>
       </DragDropContext>
 
+      {/* YENİ MODALLAR */}
       <TaskDetailsPanel task={selectedTask} isOpen={isPanelOpen} onClose={() => setIsPanelOpen(false)} />
-    </>
+      
+      <InviteMemberModal 
+        isOpen={isInviteModalOpen} 
+        onClose={() => setIsInviteModalOpen(false)} 
+        workspaceId={activeWorkspaceId} 
+      />
+    </div>
   );
 }
