@@ -32,7 +32,7 @@ export default function TaskDetailsPanel({ task, isOpen, onClose }: TaskDetailsP
     if (!task) return;
     setLoadingComments(true);
     try {
-      const response = await axios.get(`import.meta.env.VITE_API_URL/api/tasks/${task.id}/comments`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/tasks/${task.id}/comments`);
       setComments(response.data || []);
     } catch (error) {
       console.error("Yorumlar çekilemedi:", error);
@@ -46,7 +46,7 @@ export default function TaskDetailsPanel({ task, isOpen, onClose }: TaskDetailsP
     if (!newComment.trim() || !task) return;
     setSending(true);
     try {
-      await axios.post('import.meta.env.VITE_API_URL/api/comments', { task_id: task.id, user_id: 1, content: newComment });
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/comments`, { task_id: task.id, user_id: 1, content: newComment });
       setNewComment('');
       fetchComments();
     } catch (error) {
