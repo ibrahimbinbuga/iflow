@@ -6,24 +6,48 @@ import CreateProjectModal from './CreateProjectModal';
 
 export default function Sidebar() {
   const [isCompanyOpen, setIsCompanyOpen] = useState(true);
-  const [projects, setProjects] = useState<any[]>([]);
+  const [workspaces, setWorkspaces] = useState<any[]>([]);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<number | null>(null);
 
-  // Projeleri veritabanından çekme
-  const fetchProjects = async () => {
+  // Kullanıcının üye olduğu takımları (workspaces) veritabanından çekme
+  const fetchWorkspaces = async () => {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return;
+    
+    const user = JSON.parse(userStr);
+    
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/projects`);
-      setProjects(response.data || []);
+      // YENİ ROTA: Sadece bu kullanıcının takımlarını getir
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/${user.id}/workspaces`);
+      const userWorkspaces = response.data || [];
+      setWorkspaces(userWorkspaces);
+
+      // Eğer henüz seçili bir takım yoksa ve liste boş değilse, ilk takımı otomatik seç
+      const savedActiveId = localStorage.getItem('activeWorkspaceId');
+      if (!savedActiveId && userWorkspaces.length > 0) {
+        handleSelectWorkspace(userWorkspaces[0].id);
+      } else if (savedActiveId) {
+        setActiveWorkspaceId(Number(savedActiveId));
+      }
+
     } catch (error) {
-      console.error("Projeler çekilemedi:", error);
+      console.error("Takımlar çekilemedi:", error);
     }
   };
 
   useEffect(() => {
-    fetchProjects();
+    fetchWorkspaces();
   }, []);
 
-  // Projelere rastgele renk atamak için ufak bir yardımcı
+  // Takım seçildiğinde çalışacak fonksiyon
+  const handleSelectWorkspace = (id: number) => {
+    setActiveWorkspaceId(id);
+    localStorage.setItem('activeWorkspaceId', id.toString());
+    // Kanban Board'ın verileri yenilemesi için özel bir sinyal fırlatıyoruz
+    window.dispatchEvent(new Event('workspaceChanged'));
+  };
+
   const colors = ['bg-emerald-500', 'bg-primary', 'bg-pink-500', 'bg-purple-500', 'bg-orange-500'];
 
   return (
@@ -40,58 +64,69 @@ export default function Sidebar() {
               WORKSPACES
             </h3>
             <div className="space-y-1">
-              <Link to="/profile" className="w-full flex items-center gap-2 px-3 py-2 text-text-muted hover:text-text-main hover:bg-surface rounded-md transition-colors">
-                <User className="w-4 h-4" />
-                <span>Personal</span>
-              </Link>
               
               <div className="pt-1">
-                {/* Company Başlığı ve + Butonu */}
+                {/* Takımlar Başlığı ve + Butonu */}
                 <div className="flex items-center justify-between group px-1">
                   <button 
                     onClick={() => setIsCompanyOpen(!isCompanyOpen)}
                     className="flex-1 flex items-center gap-2 px-2 py-2 text-text-main bg-surface rounded-md transition-colors font-medium"
                   >
                     <Building2 className="w-4 h-4" />
-                    <span>Company</span>
+                    <span>My Teams</span>
                     {isCompanyOpen ? <ChevronDown className="w-4 h-4 text-text-muted ml-auto" /> : <ChevronRight className="w-4 h-4 text-text-muted ml-auto" />}
                   </button>
                   
-                  {/* YENİ: Proje Ekleme Butonu */}
+                  {/* Takım Ekleme Butonu */}
                   <button 
                     onClick={() => setIsProjectModalOpen(true)}
                     className="p-1.5 ml-1 text-text-muted hover:text-primary hover:bg-primary/10 rounded-md opacity-0 group-hover:opacity-100 transition-all"
-                    title="Add Project"
+                    title="Add Team"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
                 
-                {/* Dinamik Proje Listesi */}
+                {/* Dinamik Takım Listesi */}
                 {isCompanyOpen && (
                   <div className="ml-5 mt-1 border-l border-border-main pl-2 space-y-0.5 overflow-hidden animate-in slide-in-from-top-2 duration-200">
-                    {projects.length === 0 ? (
-                      <div className="px-3 py-2 text-xs text-text-muted italic">No projects yet.</div>
+                    {workspaces.length === 0 ? (
+                      <div className="px-3 py-2 text-xs text-text-muted italic">No teams yet.</div>
                     ) : (
-                      projects.map((project, index) => (
-                        <Link key={project.id} to="/" className="w-full flex items-center gap-2 px-3 py-1.5 text-text-muted hover:text-text-main hover:bg-surface rounded-md transition-colors">
+                      workspaces.map((workspace, index) => (
+                        <button 
+                          key={workspace.id} 
+                          onClick={() => handleSelectWorkspace(workspace.id)}
+                          className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${
+                            activeWorkspaceId === workspace.id 
+                              ? 'bg-primary/10 text-primary font-medium' 
+                              : 'text-text-muted hover:text-text-main hover:bg-surface'
+                          }`}
+                        >
                           <span className={`w-1.5 h-1.5 rounded-full ${colors[index % colors.length]}`}></span>
-                          <span className="truncate">{project.name}</span>
-                        </Link>
+                          <span className="truncate">{workspace.name}</span>
+                        </button>
                       ))
                     )}
                   </div>
                 )}
               </div>
+
+              <Link to="/profile" className="w-full flex items-center gap-2 px-3 py-2 mt-4 text-text-muted hover:text-text-main hover:bg-surface rounded-md transition-colors">
+                <User className="w-4 h-4" />
+                <span>My Profile</span>
+              </Link>
+
             </div>
           </div>
         </div>
       </aside>
 
+      {/* Şimdilik Modal'ı aynı bırakıyoruz, sonra içini Team oluşturacak şekilde güncelleyeceğiz */}
       <CreateProjectModal 
         isOpen={isProjectModalOpen} 
         onClose={() => setIsProjectModalOpen(false)} 
-        onSuccess={fetchProjects} 
+        onSuccess={fetchWorkspaces} 
       />
     </>
   );
