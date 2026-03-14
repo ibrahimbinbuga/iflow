@@ -39,11 +39,34 @@ export default function KanbanBoard({
 
   useEffect(() => {
     fetchTasks();
+
+    // YENİ: Sidebar'dan gelen "Takım Değişti" sinyalini dinliyoruz
+    const handleWorkspaceChange = () => {
+      setLoading(true);
+      fetchTasks();
+    };
+
+    window.addEventListener('workspaceChanged', handleWorkspaceChange);
+    
+    // Bileşen ekrandan kalktığında dinleyiciyi temizle (Hafıza sızıntısını önler)
+    return () => window.removeEventListener('workspaceChanged', handleWorkspaceChange);
   }, [refreshTrigger]);
 
   const fetchTasks = async () => {
+    // 1. Seçili takımın ID'sini al
+    const workspaceId = localStorage.getItem('activeWorkspaceId');
+    
+    // Eğer henüz bir takım seçilmemişse boş liste göster
+    if (!workspaceId) {
+      setTasks([]);
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/tasks`);
+      // 2. YENİ ROTA: Sadece bu Workspace'e (Takıma) ait görevleri çekiyoruz!
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/workspaces/${workspaceId}/tasks`);
+      
       const formattedTasks: TaskType[] = (response.data || []).map((t: any) => ({
         id: t.id,
         title: t.title,
@@ -63,6 +86,7 @@ export default function KanbanBoard({
       setTasks(formattedTasks);
     } catch (error) {
       console.error("Görevler çekilirken hata:", error);
+      setTasks([]);
     } finally {
       setLoading(false);
     }
@@ -94,7 +118,7 @@ export default function KanbanBoard({
     return (
       <div className="flex h-full items-center justify-center text-text-muted gap-2">
         <Loader2 className="w-5 h-5 animate-spin text-primary" />
-        <span>Görevler yükleniyor...</span>
+        <span>Yükleniyor...</span>
       </div>
     );
   }
