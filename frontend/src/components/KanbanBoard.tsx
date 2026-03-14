@@ -43,7 +43,7 @@ export default function KanbanBoard({
 
   const fetchTasks = async () => {
     try {
-      const response = await axios.get('http://localhost:8080/api/tasks');
+      const response = await axios.get('https://iflow-m6se.onrender.com/api/tasks');
       const formattedTasks: TaskType[] = (response.data || []).map((t: any) => ({
         id: t.id,
         title: t.title,
@@ -78,7 +78,7 @@ export default function KanbanBoard({
     setTasks(prevTasks => prevTasks.map(task => task.id === draggedTaskId ? { ...task, status: newStatus } : task));
 
     try {
-      await axios.put(`http://localhost:8080/api/tasks/${draggedTaskId}`, { status: newStatus });
+      await axios.put(`https://iflow-m6se.onrender.com/api/tasks/${draggedTaskId}`, { status: newStatus });
     } catch (error) {
       console.error("Hata:", error);
       fetchTasks();

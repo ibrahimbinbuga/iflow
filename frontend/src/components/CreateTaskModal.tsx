@@ -21,7 +21,7 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTa
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post('http://localhost:8080/api/tasks', { title, description, status, priority, project_id: 1 });
+      await axios.post('https://iflow-m6se.onrender.com/api/tasks', { title, description, status, priority, project_id: 1 });
       setTitle(''); setDescription(''); setStatus('To Do'); setPriority('Medium');
       onSuccess(); onClose();
     } catch (error) {
