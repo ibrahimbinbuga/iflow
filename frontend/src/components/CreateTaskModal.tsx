@@ -20,12 +20,54 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTa
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    // 1. Hangi takımın ekranındayız? Onu bul.
+    const activeWorkspaceId = localStorage.getItem('activeWorkspaceId');
+    if (!activeWorkspaceId) {
+      alert("Please select a team from the sidebar first.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/tasks`, { title, description, status, priority, project_id: 1 });
-      setTitle(''); setDescription(''); setStatus('To Do'); setPriority('Medium');
-      onSuccess(); onClose();
+      let targetProjectId = null;
+
+      // 2. Sistemdeki projeleri çek ve bu takıma ait olanı bul
+      const projectsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/projects`);
+      const teamProjects = projectsRes.data.filter((p: any) => p.workspace_id === Number(activeWorkspaceId));
+
+      if (teamProjects.length > 0) {
+        // Takımın zaten bir projesi varsa onu kullan
+        targetProjectId = teamProjects[0].id;
+      } else {
+        // 3. YENİ TAKIM: Eğer takımın hiç projesi yoksa, otomatik bir "General Board" projesi yarat!
+        const newProjectRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/projects`, {
+          name: "General Board",
+          workspace_id: Number(activeWorkspaceId)
+        });
+        targetProjectId = newProjectRes.data.id;
+      }
+
+      // 4. Sabit 1 yerine, bulduğumuz/oluşturduğumuz dinamik Proje ID'si ile görevi kaydet!
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/tasks`, { 
+        title, 
+        description, 
+        status, 
+        priority, 
+        project_id: targetProjectId 
+      });
+
+      // Formu temizle ve kapat
+      setTitle(''); 
+      setDescription(''); 
+      setStatus('To Do'); 
+      setPriority('Medium');
+      onSuccess(); 
+      onClose();
+
     } catch (error) {
-      console.error("Hata:", error);
+      console.error("Görev oluşturulurken hata:", error);
+      alert("Failed to create task. Please check console for details.");
     } finally {
       setLoading(false);
     }
