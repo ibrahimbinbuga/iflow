@@ -125,3 +125,16 @@ func UpdateTask(c *gin.Context) {
 
 	c.JSON(http.StatusOK, task)
 }
+
+// DeleteTask - Bir görevi veritabanından kalıcı olarak siler
+func DeleteTask(c *gin.Context) {
+	taskID := c.Param("id")
+
+	// GORM'un Delete metodu ile görevi ID'sine göre bulup siliyoruz
+	if err := database.DB.Delete(&models.Task{}, taskID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Görev silinemedi"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Görev başarıyla silindi"})
+}

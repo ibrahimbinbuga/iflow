@@ -18,6 +18,7 @@ func SetupRoutes(r *gin.Engine) {
 		api.POST("/tasks", handlers.CreateTask)
 		api.GET("/tasks", handlers.GetTasks)
 		api.PUT("/tasks/:id", handlers.UpdateTask)
+		api.DELETE("/tasks/:id", handlers.DeleteTask)
 
 		// User Rotaları
 		api.POST("/users", handlers.CreateUser)

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Send, Loader2, MessageSquare } from 'lucide-react';
+import { X, Send, Loader2, MessageSquare, Trash2 } from 'lucide-react'; // YENİ: Trash2 ikonunu ekledik
 import axios from 'axios';
 import { type TaskType } from './TaskCard';
 
@@ -22,16 +22,12 @@ export default function TaskDetailsPanel({ task, isOpen, onClose }: TaskDetailsP
   const [loadingComments, setLoadingComments] = useState(false);
   const [sending, setSending] = useState(false);
 
-  // Kullanıcı listesini ve aktif kullanıcıyı tutacağımız state'ler
   const [usersMap, setUsersMap] = useState<Record<number, { name: string, initials: string }>>({});
   const [currentUser, setCurrentUser] = useState<any>(null);
 
-  // Yorumların sonuna gitmek için Referans
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
-  // Yorumlar her değiştiğinde en alta pürüzsüz kaydırma efekti
   useEffect(() => {
-    // Yorumlar güncellendiğinde, React'in ekrana çizmesi için milisaniyelik bir süre tanı
     const timeoutId = setTimeout(() => {
       if (commentsEndRef.current) {
         commentsEndRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -41,7 +37,6 @@ export default function TaskDetailsPanel({ task, isOpen, onClose }: TaskDetailsP
   }, [comments]);
 
   useEffect(() => {
-    // O an giriş yapmış kullanıcıyı LocalStorage'dan al
     const userStr = localStorage.getItem('user');
     if (userStr) {
       setCurrentUser(JSON.parse(userStr));
@@ -49,11 +44,10 @@ export default function TaskDetailsPanel({ task, isOpen, onClose }: TaskDetailsP
 
     if (task && isOpen) {
       fetchComments();
-      fetchUsers(); // Yorum yapanların isimlerini eşleştirmek için
+      fetchUsers(); 
     }
   }, [task, isOpen]);
 
-  // Yorum yapanların ID'lerini isimlere çevirebilmek için tüm kullanıcıları çek
   const fetchUsers = async () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users`);
@@ -86,7 +80,6 @@ export default function TaskDetailsPanel({ task, isOpen, onClose }: TaskDetailsP
 
   const handleSendComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Eğer kullanıcı giriş yapmamışsa veya yorum boşsa gönderme
     if (!newComment.trim() || !task || !currentUser) return;
     
     setSending(true);
@@ -105,6 +98,30 @@ export default function TaskDetailsPanel({ task, isOpen, onClose }: TaskDetailsP
     }
   };
 
+  // YENİ: Görevi Silme Fonksiyonu
+  const handleDeleteTask = async () => {
+    if (!task) return;
+    
+    // Kullanıcıya emin olup olmadığını sor
+    const confirmDelete = window.confirm("Are you sure you want to delete this task? This action cannot be undone.");
+    if (!confirmDelete) return;
+
+    try {
+      // Backend'deki delete rotasına istek at
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/tasks/${task.id}`);
+      
+      // Paneli kapat
+      onClose();
+      
+      // Kanban Board'a "Verileri yenile" sinyali gönder (Daha önce kurduğumuz harika altyapıyı kullanıyoruz!)
+      window.dispatchEvent(new Event('workspaceChanged'));
+      
+    } catch (error) {
+      console.error("Görev silinemedi:", error);
+      alert("Failed to delete task. Please check the console.");
+    }
+  };
+
   if (!isOpen || !task) return null;
 
   return (
@@ -120,9 +137,25 @@ export default function TaskDetailsPanel({ task, isOpen, onClose }: TaskDetailsP
               {task.status}
             </span>
           </div>
-          <button onClick={onClose} className="p-2 text-text-muted hover:text-text-main hover:bg-background rounded-md transition-all">
-            <X className="w-5 h-5" />
-          </button>
+          
+          {/* YENİ: Butonlar yan yana alındı ve Silme Butonu Eklendi */}
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={handleDeleteTask} 
+              className="p-2 text-red-500/70 hover:text-red-500 hover:bg-red-500/10 rounded-md transition-all"
+              title="Delete Task"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+            <div className="w-px h-5 bg-border-main mx-1"></div> {/* Araya ince bir çizgi */}
+            <button 
+              onClick={onClose} 
+              className="p-2 text-text-muted hover:text-text-main hover:bg-background rounded-md transition-all"
+              title="Close Panel"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
         
         {/* BODY - SCROLLABLE AREA */}
