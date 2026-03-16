@@ -5,6 +5,7 @@ import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-p
 import TaskCard, { type TaskType } from './TaskCard';
 import TaskDetailsPanel from './TaskDetailsPanel';
 import InviteMemberModal from './InviteMemberModal';
+import TeamMembersPanel from './TeamMembersPanel'; // YENİ EKLENDİ
 
 const columns = [
   { title: 'To Do', status: 'To Do', dotColor: 'bg-zinc-400' },
@@ -34,22 +35,26 @@ export default function KanbanBoard({
   sortByPriority 
 }: KanbanBoardProps) {
   const [tasks, setTasks] = useState<TaskType[]>([]);
-  const [members, setMembers] = useState<any[]>([]); // YENİ: Takım üyelerini tutacağımız state
+  const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
   const [selectedTask, setSelectedTask] = useState<TaskType | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  
+  // YENİ: Takım üyeleri panelinin state'i
+  const [isMembersPanelOpen, setIsMembersPanelOpen] = useState(false);
+  
   const activeWorkspaceId = localStorage.getItem('activeWorkspaceId') ? Number(localStorage.getItem('activeWorkspaceId')) : null;
 
   useEffect(() => {
     fetchTasks();
-    fetchMembers(); // Sayfa yüklendiğinde üyeleri de çek
+    fetchMembers();
 
     const handleWorkspaceChange = () => {
       setLoading(true);
       fetchTasks();
-      fetchMembers(); // Takım değiştiğinde üyeleri de yenile
+      fetchMembers();
     };
 
     window.addEventListener('workspaceChanged', handleWorkspaceChange);
@@ -90,16 +95,13 @@ export default function KanbanBoard({
 
   const fetchTasks = async () => {
     const workspaceId = localStorage.getItem('activeWorkspaceId');
-    
     if (!workspaceId) {
       setTasks([]);
       setLoading(false);
       return;
     }
-
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/workspaces/${workspaceId}/tasks`);
-      
       const formattedTasks: TaskType[] = (response.data || []).map((t: any) => ({
         id: t.id,
         title: t.title,
@@ -174,8 +176,12 @@ export default function KanbanBoard({
         
         {activeWorkspaceId && (
           <div className="flex items-center gap-4">
-            {/* TAKIM ÜYELERİ AVATARLARI */}
-            <div className="flex items-center -space-x-2 overflow-hidden">
+            {/* TAKIM ÜYELERİ AVATARLARI - Tıklanabilir Hale Getirildi */}
+            <div 
+              className="flex items-center -space-x-2 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => setIsMembersPanelOpen(true)}
+              title="View Team Members"
+            >
               {members.map((member, index) => {
                 const names = (member.full_name || 'U').split(' ');
                 const initials = names.length > 1 ? (names[0][0] + names[1][0]).toUpperCase() : names[0].substring(0, 2).toUpperCase();
@@ -183,7 +189,6 @@ export default function KanbanBoard({
                   <div 
                     key={member.id} 
                     className="inline-block w-8 h-8 rounded-full ring-2 ring-background bg-primary text-white flex items-center justify-center text-xs font-bold z-10"
-                    title={member.full_name || member.email}
                     style={{ zIndex: members.length - index }}
                   >
                     {initials}
@@ -252,7 +257,10 @@ export default function KanbanBoard({
         </div>
       </DragDropContext>
 
+      {/* YENİ MODALLAR VE PANELLER */}
       <TaskDetailsPanel task={selectedTask} isOpen={isPanelOpen} onClose={() => setIsPanelOpen(false)} />
+      
+      <TeamMembersPanel isOpen={isMembersPanelOpen} onClose={() => setIsMembersPanelOpen(false)} members={members} />
       
       <InviteMemberModal 
         isOpen={isInviteModalOpen} 
