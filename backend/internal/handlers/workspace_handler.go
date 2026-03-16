@@ -156,3 +156,47 @@ func GetWorkspaceMembers(c *gin.Context) {
 
 	c.JSON(http.StatusOK, workspace.Members)
 }
+
+// DeleteWorkspace - Takımı ve ona bağlı HER ŞEYİ (Projeler, Görevler, Yorumlar) siler
+func DeleteWorkspace(c *gin.Context) {
+	workspaceID := c.Param("id")
+
+	// 1. Önce bu takıma ait tüm projeleri bulalım
+	var projects []models.Project
+	database.DB.Where("workspace_id = ?", workspaceID).Find(&projects)
+
+	for _, project := range projects {
+		// Her bir proje için ona bağlı görevleri (tasks) bul
+		var tasks []models.Task
+		database.DB.Where("project_id = ?", project.ID).Find(&tasks)
+
+		for _, task := range tasks {
+			// Göreve bağlı yorumları ve bildirimleri sil
+			database.DB.Where("task_id = ?", task.ID).Delete(&models.Comment{})
+			database.DB.Where("task_id = ?", task.ID).Delete(&models.Notification{})
+
+			// Görevin Many-to-Many ilişkilerini temizle
+			database.DB.Model(&task).Association("Assignees").Clear()
+			database.DB.Model(&task).Association("Tags").Clear()
+
+			// Görevi sil
+			database.DB.Delete(&task)
+		}
+		// Görevleri bitince Projeyi sil
+		database.DB.Delete(&project)
+	}
+
+	// 2. Takımın M2M (Üyeler) ilişkilerini temizle
+	var workspace models.Workspace
+	if err := database.DB.First(&workspace, workspaceID).Error; err == nil {
+		database.DB.Model(&workspace).Association("Members").Clear()
+	}
+
+	// 3. Son olarak tertemiz kalan Takımı (Workspace) sil
+	if err := database.DB.Delete(&models.Workspace{}, workspaceID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Takım silinemedi"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Takım ve bağlı tüm veriler başarıyla silindi!"})
+}

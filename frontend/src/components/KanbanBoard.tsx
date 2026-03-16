@@ -260,7 +260,12 @@ export default function KanbanBoard({
       {/* YENİ MODALLAR VE PANELLER */}
       <TaskDetailsPanel task={selectedTask} isOpen={isPanelOpen} onClose={() => setIsPanelOpen(false)} />
       
-      <TeamMembersPanel isOpen={isMembersPanelOpen} onClose={() => setIsMembersPanelOpen(false)} members={members} />
+      <TeamMembersPanel 
+        isOpen={isMembersPanelOpen} 
+        onClose={() => setIsMembersPanelOpen(false)} 
+        members={members}
+        workspaceId={activeWorkspaceId} // <-- SADECE BU SATIRI EKLEDİK
+      />
       
       <InviteMemberModal 
         isOpen={isInviteModalOpen} 
