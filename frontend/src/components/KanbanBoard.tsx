@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Loader2, UserPlus } from 'lucide-react'; // Plus butonunu importlardan sildik
+import { Loader2, UserPlus } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import TaskCard, { type TaskType } from './TaskCard';
 import TaskDetailsPanel from './TaskDetailsPanel';
@@ -34,6 +34,7 @@ export default function KanbanBoard({
   sortByPriority 
 }: KanbanBoardProps) {
   const [tasks, setTasks] = useState<TaskType[]>([]);
+  const [members, setMembers] = useState<any[]>([]); // YENİ: Takım üyelerini tutacağımız state
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<TaskType | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -43,17 +44,18 @@ export default function KanbanBoard({
 
   useEffect(() => {
     fetchTasks();
+    fetchMembers(); // Sayfa yüklendiğinde üyeleri de çek
 
     const handleWorkspaceChange = () => {
       setLoading(true);
       fetchTasks();
+      fetchMembers(); // Takım değiştiğinde üyeleri de yenile
     };
 
     window.addEventListener('workspaceChanged', handleWorkspaceChange);
     return () => window.removeEventListener('workspaceChanged', handleWorkspaceChange);
   }, [refreshTrigger]);
 
-  // YENİ: Akıllı Işınlanma (Takım uyuşmuyorsa kullanıcıyı uyar)
   useEffect(() => {
     const handleOpenTask = (e: Event) => {
       const customEvent = e as CustomEvent;
@@ -74,6 +76,17 @@ export default function KanbanBoard({
     window.addEventListener('openTaskFromNotification', handleOpenTask);
     return () => window.removeEventListener('openTaskFromNotification', handleOpenTask);
   }, [tasks]);
+
+  const fetchMembers = async () => {
+    const workspaceId = localStorage.getItem('activeWorkspaceId');
+    if (!workspaceId) return;
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/workspaces/${workspaceId}/members`);
+      setMembers(response.data || []);
+    } catch (error) {
+      console.error("Üyeler çekilemedi:", error);
+    }
+  };
 
   const fetchTasks = async () => {
     const workspaceId = localStorage.getItem('activeWorkspaceId');
@@ -158,14 +171,35 @@ export default function KanbanBoard({
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-6 shrink-0 pr-2 transition-colors duration-300">
         <h1 className="text-2xl font-bold text-text-main">Team Board</h1>
+        
         {activeWorkspaceId && (
-          <button 
-            onClick={() => setIsInviteModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 rounded-md transition-colors"
-          >
-            <UserPlus className="w-4 h-4" />
-            Invite Teammate
-          </button>
+          <div className="flex items-center gap-4">
+            {/* TAKIM ÜYELERİ AVATARLARI */}
+            <div className="flex items-center -space-x-2 overflow-hidden">
+              {members.map((member, index) => {
+                const names = (member.full_name || 'U').split(' ');
+                const initials = names.length > 1 ? (names[0][0] + names[1][0]).toUpperCase() : names[0].substring(0, 2).toUpperCase();
+                return (
+                  <div 
+                    key={member.id} 
+                    className="inline-block w-8 h-8 rounded-full ring-2 ring-background bg-primary text-white flex items-center justify-center text-xs font-bold z-10"
+                    title={member.full_name || member.email}
+                    style={{ zIndex: members.length - index }}
+                  >
+                    {initials}
+                  </div>
+                );
+              })}
+            </div>
+
+            <button 
+              onClick={() => setIsInviteModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 rounded-md transition-colors"
+            >
+              <UserPlus className="w-4 h-4" />
+              Invite Teammate
+            </button>
+          </div>
         )}
       </div>
 
@@ -183,7 +217,6 @@ export default function KanbanBoard({
                       {columnTasks.length}
                     </span>
                   </div>
-                  {/* + BUTONU BURADAN SİLİNDİ, ARAYÜZ ARTIK ÇOK DAHA TEMİZ! */}
                 </div>
 
                 <Droppable droppableId={column.status}>

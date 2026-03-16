@@ -142,3 +142,17 @@ func MarkNotificationRead(c *gin.Context) {
 	database.DB.Model(&models.Notification{}).Where("id = ?", notifID).Update("is_read", true)
 	c.JSON(http.StatusOK, gin.H{"message": "Marked as read"})
 }
+
+// GetWorkspaceMembers - Belirli bir takımın üyelerini getirir
+func GetWorkspaceMembers(c *gin.Context) {
+	workspaceID := c.Param("id")
+	var workspace models.Workspace
+
+	// Preload("Members") ile takıma bağlı tüm kullanıcıları çekiyoruz
+	if err := database.DB.Preload("Members").First(&workspace, workspaceID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Takım bulunamadı"})
+		return
+	}
+
+	c.JSON(http.StatusOK, workspace.Members)
+}
