@@ -126,11 +126,24 @@ func UpdateTask(c *gin.Context) {
 	c.JSON(http.StatusOK, task)
 }
 
-// DeleteTask - Bir görevi veritabanından kalıcı olarak siler
+// DeleteTask - Bir görevi ve ona bağlı tüm verileri veritabanından kalıcı olarak siler
 func DeleteTask(c *gin.Context) {
 	taskID := c.Param("id")
 
-	// GORM'un Delete metodu ile görevi ID'sine göre bulup siliyoruz
+	// 1. Önce bu göreve bağlı olan tüm YORUMLARI sil
+	database.DB.Where("task_id = ?", taskID).Delete(&models.Comment{})
+
+	// 2. Bu göreve bağlı olan tüm BİLDİRİMLERİ sil (Geçen sefer eklediğimiz task_id yüzünden)
+	database.DB.Where("task_id = ?", taskID).Delete(&models.Notification{})
+
+	// 3. Görevin Many-to-Many ilişkilerini (Atanan Kişiler ve Etiketler) tablolardan temizle
+	var task models.Task
+	if err := database.DB.First(&task, taskID).Error; err == nil {
+		database.DB.Model(&task).Association("Assignees").Clear()
+		database.DB.Model(&task).Association("Tags").Clear()
+	}
+
+	// 4. Artık görevi tutan hiçbir bağ kalmadı, kendisini güvenle silebiliriz!
 	if err := database.DB.Delete(&models.Task{}, taskID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Görev silinemedi"})
 		return
